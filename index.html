@@ -159,6 +159,9 @@ h1{font-size:clamp(20px,4.5vw,26px);letter-spacing:-.02em;white-space:nowrap}
   background:linear-gradient(90deg,var(--brand1),var(--brand3));
   -webkit-background-clip:text;background-clip:text;color:transparent}
 .mini .l{font-size:11.5px;color:var(--text3);margin-top:2px}
+.ia-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 22px}
+@media (max-width:640px){.ia-grid{grid-template-columns:1fr}}
+.ia-sub{font-size:12px;font-weight:650;color:var(--text2);margin-bottom:6px}
 .legend{display:flex;flex-wrap:wrap;gap:8px 14px;margin:-2px 0 10px;font-size:12px;color:var(--text2)}
 .legend span{display:inline-flex;align-items:center;gap:6px}
 .legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
@@ -240,6 +243,13 @@ footer code{background:var(--card);border:1px solid var(--border);border-radius:
         <div id="chartFoco" class="chart"></div>
       </article>
       <article class="card">
+        <h2 id="tituloIA"></h2>
+        <div class="ia-grid">
+          <div><div class="ia-sub">Tokens por día</div><div id="chartTokens" class="chart"></div></div>
+          <div><div class="ia-sub">Gasto por día (S/)</div><div id="chartGasto" class="chart"></div></div>
+        </div>
+      </article>
+      <article class="card">
         <h2 id="tituloTipos"></h2>
         <div id="chartTipos" class="chart"></div>
       </article>
@@ -269,8 +279,11 @@ footer code{background:var(--card);border:1px solid var(--border);border-radius:
        - sin  `fin`  → HITO puntual (commits, PRs, tickets, facturas…)
        - `cantidad`  → cuánto suma el hito a su KPI (opcional, def. 1)
        - `tipo` debe ser el id de una métrica ("descanso" no suma a nada)
-   · `semana`: 7 filas. Las 6 primeras traen totales; la última es HOY
-     y sus totales SE CALCULAN SOLOS a partir de `hoy.eventos`.
+       - tipo "ia"   → sesión de IA: lleva `tokens` y `gasto` (en S/);
+         alimenta los KPI "Tokens IA" y "Gasto IA", no cuenta actividades
+   · `semana`: 7 filas. Las 6 primeras traen totales (incluidos `tokens`
+     y `gasto` en soles); la última es HOY y sus totales SE CALCULAN
+     SOLOS a partir de `hoy.eventos`.
    ================================================================ */
 const SEED = {
   ingeniero: {
@@ -280,6 +293,9 @@ const SEED = {
        el degradado de marca del tema (esmeralda neón → oro), no lleva c1/c2. */
     metricas: [
       { id:"foco",      label:"Horas de foco",    unidad:"h", decimales:1, hero:true, icono:"zap" },
+      /* `aparte:true` = no entra a las barras apiladas (unidad distinta) */
+      { id:"tokens",    label:"Tokens IA",        aparte:true, formato:"tokens", icono:"cpu",    c1:"#199EB2", c2:"#4FD8E8" },
+      { id:"gasto",     label:"Gasto IA",         aparte:true, formato:"soles",  icono:"moneda", c1:"#B78C15", c2:"#E9BE57" },
       { id:"reuniones", label:"Reuniones",        icono:"cal",    stack:3, c1:"#C0392B", c2:"#E0705C" },
       { id:"llamadas",  label:"Llamadas",         icono:"tel",    stack:1, c1:"#B78C15", c2:"#E9BE57" },
       { id:"commits",   label:"Commits / push",   icono:"commit", stack:0, c1:"#0F9D74", c2:"#18E29E" },
@@ -292,20 +308,24 @@ const SEED = {
       eventos: [
         { inicio:"08:30", fin:"08:45", tipo:"reuniones", titulo:"Daily standup del equipo" },
         { inicio:"08:45", fin:"10:15", tipo:"foco",      titulo:"Feature: exportación de reportes a PDF" },
+        { inicio:"09:05",              tipo:"ia",        titulo:"Claude Code: plan + código del exportador", tokens:185000, gasto:4.90 },
         { inicio:"09:40",              tipo:"commits",   titulo:"push: parser de plantillas", cantidad:2 },
         { inicio:"10:15", fin:"10:30", tipo:"llamadas",  titulo:"Sync con DevOps por el deploy" },
         { inicio:"10:30", fin:"11:00", tipo:"reviews",   titulo:"Review PR #142 · API de pagos" },
         { inicio:"11:00", fin:"12:30", tipo:"foco",      titulo:"Refactor del módulo de autenticación" },
+        { inicio:"11:20",              tipo:"ia",        titulo:"Refactor de auth asistido con IA", tokens:142000, gasto:3.80 },
         { inicio:"11:45",              tipo:"commits",   titulo:"refactor: middleware de sesiones" },
         { inicio:"12:30", fin:"13:30", tipo:"descanso",  titulo:"Almuerzo" },
         { inicio:"13:30", fin:"14:00", tipo:"reuniones", titulo:"Refinamiento del backlog" },
         { inicio:"14:00", fin:"15:30", tipo:"foco",      titulo:"Fix: bug intermitente en websockets" },
+        { inicio:"14:40",              tipo:"ia",        titulo:"Debug de websockets con IA", tokens:96000, gasto:2.60 },
         { inicio:"15:20",              tipo:"commits",   titulo:"push: reconexión con backoff", cantidad:3 },
         { inicio:"15:30",              tipo:"prs",       titulo:"PR #145 abierto · reconexión websockets" },
         { inicio:"15:35", fin:"15:50", tipo:"llamadas",  titulo:"Cliente: incidencia en producción" },
         { inicio:"15:50", fin:"16:30", tipo:"reviews",   titulo:"Review PR #143 · migración de BD" },
         { inicio:"16:30",              tipo:"tickets",   titulo:"Cerrados BUG-311 y BUG-317", cantidad:2 },
         { inicio:"16:30", fin:"17:30", tipo:"foco",      titulo:"Tests e2e del release 2.4" },
+        { inicio:"16:50",              tipo:"ia",        titulo:"Suite e2e generada con IA", tokens:78000, gasto:2.10 },
         { inicio:"17:10",              tipo:"commits",   titulo:"test: suite e2e de pagos" },
         { inicio:"17:30",              tipo:"prs",       titulo:"PR #145 aprobado y mergeado" },
         { inicio:"17:35", fin:"17:50", tipo:"reuniones", titulo:"Cierre del día con el equipo" },
@@ -313,12 +333,12 @@ const SEED = {
       ],
     },
     semana: [
-      { fecha:"2026-08-11", foco:4,   reuniones:4, llamadas:3, commits:6,  prs:1, reviews:2, tickets:2 },
-      { fecha:"2026-08-12", foco:5.5, reuniones:2, llamadas:1, commits:9,  prs:2, reviews:1, tickets:4 },
-      { fecha:"2026-08-13", foco:3,   reuniones:5, llamadas:4, commits:4,  prs:0, reviews:3, tickets:1 },
-      { fecha:"2026-08-14", foco:6,   reuniones:1, llamadas:2, commits:11, prs:3, reviews:2, tickets:5 },
-      { fecha:"2026-08-15", foco:1.5, reuniones:0, llamadas:0, commits:2,  prs:0, reviews:0, tickets:1 },
-      { fecha:"2026-08-16", foco:0,   reuniones:0, llamadas:0, commits:0,  prs:0, reviews:0, tickets:0 },
+      { fecha:"2026-08-11", foco:4,   reuniones:4, llamadas:3, commits:6,  prs:1, reviews:2, tickets:2, tokens:620000,  gasto:16.50 },
+      { fecha:"2026-08-12", foco:5.5, reuniones:2, llamadas:1, commits:9,  prs:2, reviews:1, tickets:4, tokens:890000,  gasto:23.80 },
+      { fecha:"2026-08-13", foco:3,   reuniones:5, llamadas:4, commits:4,  prs:0, reviews:3, tickets:1, tokens:310000,  gasto:8.20 },
+      { fecha:"2026-08-14", foco:6,   reuniones:1, llamadas:2, commits:11, prs:3, reviews:2, tickets:5, tokens:1250000, gasto:33.40 },
+      { fecha:"2026-08-15", foco:1.5, reuniones:0, llamadas:0, commits:2,  prs:0, reviews:0, tickets:1, tokens:180000,  gasto:4.90 },
+      { fecha:"2026-08-16", foco:0,   reuniones:0, llamadas:0, commits:0,  prs:0, reviews:0, tickets:0, tokens:0,       gasto:0 },
       { fecha:"2026-08-17", esHoy:true }, // ← HOY: totales auto-calculados desde hoy.eventos
     ],
   },
@@ -327,6 +347,8 @@ const SEED = {
     nombre: "Contador",
     metricas: [
       { id:"foco",           label:"Horas de foco",       unidad:"h", decimales:1, hero:true, icono:"zap" },
+      { id:"tokens",         label:"Tokens IA",           aparte:true, formato:"tokens", icono:"cpu",    c1:"#199EB2", c2:"#4FD8E8" },
+      { id:"gasto",          label:"Gasto IA",            aparte:true, formato:"soles",  icono:"moneda", c1:"#B78C15", c2:"#E9BE57" },
       { id:"reuniones",      label:"Reuniones",           icono:"cal",     stack:3, c1:"#C0392B", c2:"#E0705C" },
       { id:"llamadas",       label:"Llamadas",            icono:"tel",     stack:1, c1:"#B78C15", c2:"#E9BE57" },
       { id:"asientos",       label:"Asientos registrados",icono:"libro",   stack:0, c1:"#0F9D74", c2:"#18E29E" },
@@ -339,6 +361,7 @@ const SEED = {
       eventos: [
         { inicio:"08:30", fin:"09:00", tipo:"reuniones",      titulo:"Comité de gerencia · flujo de caja" },
         { inicio:"09:00", fin:"10:30", tipo:"foco",           titulo:"Conciliación bancaria BCP (soles y dólares)" },
+        { inicio:"09:50",              tipo:"ia",             titulo:"Conciliación asistida con IA", tokens:88000, gasto:2.40 },
         { inicio:"10:20",              tipo:"conciliaciones", titulo:"BCP soles y dólares conciliadas", cantidad:2 },
         { inicio:"10:30", fin:"10:45", tipo:"llamadas",       titulo:"SUNAT: cronograma de vencimientos" },
         { inicio:"10:45", fin:"12:15", tipo:"foco",           titulo:"Registro de compras de la quincena" },
@@ -347,6 +370,7 @@ const SEED = {
         { inicio:"12:20", fin:"13:15", tipo:"descanso",       titulo:"Almuerzo" },
         { inicio:"13:15", fin:"13:45", tipo:"reuniones",      titulo:"Cliente Alfa: avance del cierre de julio" },
         { inicio:"13:45", fin:"15:15", tipo:"foco",           titulo:"Cierre contable de julio · Cliente Alfa" },
+        { inicio:"13:55",              tipo:"ia",             titulo:"Revisión IA de asientos del cierre", tokens:130000, gasto:3.50 },
         { inicio:"15:05",              tipo:"asientos",       titulo:"Ajustes y provisiones", cantidad:8 },
         { inicio:"15:15",              tipo:"cierres",        titulo:"Cierre de julio de Cliente Alfa ✔" },
         { inicio:"15:20", fin:"15:35", tipo:"llamadas",       titulo:"Banco: confirmación de detracciones" },
@@ -355,16 +379,17 @@ const SEED = {
         { inicio:"16:20",              tipo:"facturas",       titulo:"Notas de crédito + factura F001-1042", cantidad:3 },
         { inicio:"16:20", fin:"16:50", tipo:"reuniones",      titulo:"Planificación de declaraciones (PDT/PLE)" },
         { inicio:"16:50", fin:"17:35", tipo:"foco",           titulo:"Borrador del PLE de agosto" },
+        { inicio:"16:55",              tipo:"ia",             titulo:"PLE de agosto con apoyo de IA", tokens:64000, gasto:1.70 },
         { inicio:"17:30",              tipo:"cierres",        titulo:"Pre-cierre de caja chica ✔" },
       ],
     },
     semana: [
-      { fecha:"2026-08-11", foco:4.5, reuniones:3, llamadas:4, asientos:18, facturas:6,  conciliaciones:2, cierres:1 },
-      { fecha:"2026-08-12", foco:5,   reuniones:2, llamadas:5, asientos:24, facturas:8,  conciliaciones:3, cierres:1 },
-      { fecha:"2026-08-13", foco:3.5, reuniones:4, llamadas:6, asientos:15, facturas:12, conciliaciones:1, cierres:0 },
-      { fecha:"2026-08-14", foco:6.5, reuniones:2, llamadas:3, asientos:30, facturas:9,  conciliaciones:4, cierres:3 },
-      { fecha:"2026-08-15", foco:2,   reuniones:0, llamadas:1, asientos:6,  facturas:0,  conciliaciones:1, cierres:0 },
-      { fecha:"2026-08-16", foco:0,   reuniones:0, llamadas:0, asientos:0,  facturas:0,  conciliaciones:0, cierres:0 },
+      { fecha:"2026-08-11", foco:4.5, reuniones:3, llamadas:4, asientos:18, facturas:6,  conciliaciones:2, cierres:1, tokens:150000, gasto:4.10 },
+      { fecha:"2026-08-12", foco:5,   reuniones:2, llamadas:5, asientos:24, facturas:8,  conciliaciones:3, cierres:1, tokens:210000, gasto:5.60 },
+      { fecha:"2026-08-13", foco:3.5, reuniones:4, llamadas:6, asientos:15, facturas:12, conciliaciones:1, cierres:0, tokens:95000,  gasto:2.50 },
+      { fecha:"2026-08-14", foco:6.5, reuniones:2, llamadas:3, asientos:30, facturas:9,  conciliaciones:4, cierres:3, tokens:320000, gasto:8.60 },
+      { fecha:"2026-08-15", foco:2,   reuniones:0, llamadas:1, asientos:6,  facturas:0,  conciliaciones:1, cierres:0, tokens:40000,  gasto:1.10 },
+      { fecha:"2026-08-16", foco:0,   reuniones:0, llamadas:0, asientos:0,  facturas:0,  conciliaciones:0, cierres:0, tokens:0,      gasto:0 },
       { fecha:"2026-08-17", esHoy:true }, // ← HOY: totales auto-calculados desde hoy.eventos
     ],
   },
@@ -429,7 +454,11 @@ const ICONS = {
   luna:'<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>',
   barras:'<line x1="6" y1="20" x2="6" y2="14"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="18" y1="20" x2="18" y2="10"/>',
   reloj:'<circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 13.5"/>',
+  cpu:'<rect x="6" y="6" width="12" height="12" rx="2"/><rect x="10" y="10" width="4" height="4"/><line x1="9" y1="2" x2="9" y2="6"/><line x1="15" y1="2" x2="15" y2="6"/><line x1="9" y1="18" x2="9" y2="22"/><line x1="15" y1="18" x2="15" y2="22"/><line x1="2" y1="9" x2="6" y2="9"/><line x1="2" y1="15" x2="6" y2="15"/><line x1="18" y1="9" x2="22" y2="9"/><line x1="18" y1="15" x2="22" y2="15"/>',
+  moneda:'<circle cx="12" cy="12" r="9"/><path d="M15 8.6a3.2 3.2 0 0 0-5.6 2.1c0 2.7 5.6 1.5 5.6 4.2A3.2 3.2 0 0 1 9.4 17"/><line x1="12" y1="5.4" x2="12" y2="7.1"/><line x1="12" y1="16.9" x2="12" y2="18.6"/>',
 };
+/* pseudo-métrica para pintar sesiones de IA en la línea de tiempo */
+const IA_META = { label:"Sesión IA", c1:"#199EB2", c2:"#4FD8E8" };
 const icon = (n, s=16) =>
   `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n]||""}</svg>`;
 
@@ -450,10 +479,12 @@ const metricById = id => P.metricas.find(m => m.id === id);
 function computeTotals(prof){
   const tot = {}; prof.metricas.forEach(m => tot[m.id] = 0);
   for (const e of prof.hoy.eventos){
-    if (e.tipo === "foco" && e.fin) tot.foco += (toMin(e.fin) - toMin(e.inicio)) / 60;
+    if (e.tipo === "ia"){ tot.tokens = (tot.tokens || 0) + (e.tokens || 0); tot.gasto = (tot.gasto || 0) + (e.gasto || 0); }
+    else if (e.tipo === "foco" && e.fin) tot.foco += (toMin(e.fin) - toMin(e.inicio)) / 60;
     else if (tot[e.tipo] !== undefined && e.tipo !== "foco") tot[e.tipo] += e.cantidad || 1;
   }
   tot.foco = Math.round(tot.foco * 100) / 100;
+  if (tot.gasto) tot.gasto = Math.round(tot.gasto * 100) / 100;
   return tot;
 }
 /* Las 7 filas de la semana, con HOY ya calculado */
@@ -465,7 +496,12 @@ function semanaRows(){
     return base;
   });
 }
-const tiposConteo = () => P.metricas.filter(m => !m.hero).slice().sort((a, b) => (a.stack ?? 9) - (b.stack ?? 9));
+const tiposConteo = () => P.metricas.filter(m => !m.hero && !m.aparte).slice().sort((a, b) => (a.stack ?? 9) - (b.stack ?? 9));
+/* Formatos: tokens compactos (412 k / 1.2 M) y soles (S/ 12.40) */
+const fmtTokens = v => v >= 1e6 ? fmt(v/1e6, v < 1e7 ? 1 : 0) + " M" : v >= 1e3 ? fmt(Math.round(v/1e3)) + " k" : fmt(v);
+const fmtVal = (m, v) => m.formato === "tokens" ? fmtTokens(v)
+  : m.formato === "soles" ? "S/ " + fmt(v, 2)
+  : fmt(v, m.decimales || 0) + (m.unidad ? " " + m.unidad : "");
 /* Colores de marca vigentes según el tema (para el KPI héroe y su sparkline) */
 const BRAND = () => {
   const cs = getComputedStyle(document.documentElement);
@@ -486,14 +522,14 @@ function spark(vals, c1, c2, big){
 }
 
 /* ---------- Animación numérica ---------- */
-function countUp(el, to, dec, suf, anim){
+function countUp(el, to, f, anim){
   if (!el) return;
   /* sin animación (o pestaña oculta: rAF pausado) → valor directo */
-  if (!anim || RM || document.hidden){ el.textContent = fmt(to, dec) + suf; return; }
+  if (!anim || RM || document.hidden){ el.textContent = f(to); return; }
   const t0 = performance.now(), dur = 680;
   const step = t => {
     const k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3);
-    el.textContent = fmt(to * e, dec) + suf;
+    el.textContent = f(to * e);
     if (k < 1) requestAnimationFrame(step);
   };
   requestAnimationFrame(step);
@@ -532,7 +568,7 @@ function renderKPIs(anim){
         ${delta}
       </article>`;
   }).join("");
-  P.metricas.forEach(m => countUp($("#num-" + m.id), TOT[m.id] || 0, m.decimales || 0, m.unidad ? " " + m.unidad : "", anim));
+  P.metricas.forEach(m => countUp($("#num-" + m.id), TOT[m.id] || 0, v => fmtVal(m, v), anim));
 }
 
 function renderInsight(){
@@ -545,7 +581,7 @@ function renderInsight(){
     frases.push(`Hoy llevas <b>${fmt(f,1)} h de foco</b>, ${cmp} tu promedio de la semana (${fmt(avgF,1)} h).`);
   }
   let best = null;
-  P.metricas.filter(m => !m.hero && !["reuniones","llamadas"].includes(m.id)).forEach(m => {
+  P.metricas.filter(m => !m.hero && !m.aparte && !["reuniones","llamadas"].includes(m.id)).forEach(m => {
     const avg = prev.reduce((s, r) => s + (r[m.id] || 0), 0) / prev.length;
     const v = TOT[m.id] || 0;
     if (v > 0 && avg > 0){ const r = v / avg; if (!best || r > best.r) best = { m, v, avg, r }; }
@@ -555,6 +591,10 @@ function renderInsight(){
   frases.push(inter >= 5
     ? `Registraste <b>${fmt(inter)} interrupciones</b> entre reuniones y llamadas: agruparlas en un solo tramo liberaría un bloque extra de 90 min de foco.`
     : `Buen balance: solo ${fmt(inter)} interrupciones entre reuniones y llamadas.`);
+  if ((TOT.tokens || 0) > 0){
+    const gastoSem = rows.reduce((s, r) => s + (r.gasto || 0), 0);
+    frases.push(`IA de hoy: <b>${fmtTokens(TOT.tokens)} tokens</b> por <b>S/ ${fmt(TOT.gasto || 0, 2)}</b>; la semana acumula S/ ${fmt(gastoSem, 2)}.`);
+  }
   $("#insight").innerHTML = `
     <div class="ins-head"><span class="chip brand">${icon("spark",15)}</span><h2>Insight del día</h2>
     <span class="tag">IA local · reglas sobre tus datos, sin backend</span></div>
@@ -597,10 +637,11 @@ function renderTimeline(){
     }
     const n = lanes.length, laneW = (blocksW - (n - 1) * 6) / n;
     for (const b of c.items){
-      const m = metricById(b.e.tipo) || DESCANSO;
+      const m = b.e.tipo === "ia" ? IA_META : (metricById(b.e.tipo) || DESCANSO);
       const c1 = m.c1 || BRAND()[0];   /* el foco toma la esmeralda de marca */
       const top = y(b.s) + 1, hgt = y(b.t) - y(b.s) - 3;
-      html += `<div class="tl-block ${hgt < 40 ? "sm" : ""}" data-tip="${esc(`${b.e.inicio}–${b.e.fin} · ${m.label} · ${b.e.titulo}`)}"
+      const extraIA = b.e.tipo === "ia" ? ` · ${fmtTokens(b.e.tokens || 0)} tokens · S/ ${fmt(b.e.gasto || 0, 2)}` : "";
+      html += `<div class="tl-block ${hgt < 40 ? "sm" : ""}" data-tip="${esc(`${b.e.inicio}–${b.e.fin} · ${m.label}${extraIA} · ${b.e.titulo}`)}"
         style="top:${top}px;left:${rulerW + b.lane * (laneW + 6)}px;width:${laneW}px;height:${hgt}px;
         background:${rgba(c1,.13)};border-color:${rgba(c1,.42)};border-left-color:${c1};animation-delay:${bi*30}ms">
         <div class="tl-t">${esc(b.e.titulo)}</div>
@@ -611,14 +652,19 @@ function renderTimeline(){
   /* hitos puntuales (columna derecha) */
   let lastY = -99;
   evs.filter(e => !e.fin).forEach((e, i) => {
-    const m = metricById(e.tipo) || DESCANSO, q = e.cantidad || 1;
+    const esIA = e.tipo === "ia";
+    const m = esIA ? IA_META : (metricById(e.tipo) || DESCANSO), q = e.cantidad || 1;
     const c1 = m.c1 || BRAND()[0];
     let yy = y(toMin(e.inicio)) - 11;
     if (yy < lastY + 26) yy = lastY + 26;
     lastY = yy;
-    html += `<div class="tl-point" data-tip="${esc(`${e.inicio} · ${m.label} +${q} · ${e.titulo}`)}"
+    const chip = esIA ? fmtTokens(e.tokens || 0) : "+" + q;
+    const tipTxt = esIA
+      ? `${e.inicio} · ${m.label} · ${fmtTokens(e.tokens || 0)} tokens · S/ ${fmt(e.gasto || 0, 2)} · ${e.titulo}`
+      : `${e.inicio} · ${m.label} +${q} · ${e.titulo}`;
+    html += `<div class="tl-point" data-tip="${esc(tipTxt)}"
       style="top:${yy}px;left:${chipX}px;max-width:${chipW}px;animation-delay:${i*40}ms">
-      <span class="dot" style="background:${c1}"></span><b>+${q}</b><span class="tl-pt">${esc(e.titulo)}</span></div>`;
+      <span class="dot" style="background:${c1}"></span><b>${chip}</b><span class="tl-pt">${esc(e.titulo)}</span></div>`;
   });
   el.style.height = Math.max(H, lastY + 30) + "px";
   el.innerHTML = html;
@@ -631,10 +677,14 @@ function renderResumen(){
   const acts = rows.reduce((s, r) => s + tipos.reduce((a, m) => a + (r[m.id] || 0), 0), 0);
   const totalDia = r => tipos.reduce((a, m) => a + (r[m.id] || 0), 0);
   const mejor = rows.reduce((a, b) => totalDia(b) > totalDia(a) ? b : a);
+  const tokTot = rows.reduce((s, r) => s + (r.tokens || 0), 0);
+  const gastoTot = rows.reduce((s, r) => s + (r.gasto || 0), 0);
   $("#resumenSemana").innerHTML = [
     { v: fmt(focoTot,1) + " h", l: "de foco en la semana" },
     { v: fmt(acts), l: "actividades registradas" },
     { v: mejor.label, l: "día más productivo" },
+    { v: fmtTokens(tokTot), l: "tokens de IA en la semana" },
+    { v: "S/ " + fmt(gastoTot,2), l: "gasto en IA de la semana" },
   ].map((c, i) => `<article class="card mini" style="animation-delay:${i*45}ms"><div class="v">${c.v}</div><div class="l">${c.l}</div></article>`).join("");
 }
 
@@ -727,6 +777,46 @@ function renderFoco(){
     ${dots}${labels}${xlabs}</svg>`;
 }
 
+/* Mini-barras de una sola serie (tokens o soles) — mismas reglas: extremo
+   redondeado, etiquetas selectivas (máximo y hoy) y tooltip en cada barra */
+function miniBarras(el, rows, val, c1, c2, gid, fTick, fLabel, tipo){
+  const W = el.clientWidth;
+  if (!W) return;
+  const H = 170, pl = 44, pr = 6, pt = 14, pb = 26, ih = H - pt - pb;
+  const vals = rows.map(val);
+  const step = niceStep(Math.max(...vals, 1) / 4), maxY = step * 4;
+  const band = (W - pl - pr) / rows.length, bw = Math.min(band * 0.55, 38);
+  const short = band < 46;
+  const y = v => pt + ih - (v / maxY) * ih;
+  const maxV = Math.max(...vals);
+  let grid = "", bars = "", labels = "";
+  for (let t = 0; t <= 4; t++){
+    const yy = y(step * t);
+    grid += `<line x1="${pl}" x2="${W-pr}" y1="${yy}" y2="${yy}" class="${t === 0 ? "baseline" : "gl"}"/>
+             <text x="${pl-6}" y="${yy+4}" class="tick" text-anchor="end">${fTick(step*t)}</text>`;
+  }
+  rows.forEach((r, i) => {
+    const v = vals[i], cx = pl + band * i + band / 2, x = cx - bw / 2;
+    if (v > 0){
+      bars += `<path class="seg-bar" d="${topRect(x, y(v), bw, y(0) - y(v), 4)}" fill="url(#${gid})" style="animation-delay:${i*40}ms"
+        data-tip="${esc(`${r.tipLabel} · ${tipo}: ${fLabel(v)}`)}"/>`;
+      if (v === maxV || r.esHoy) labels += `<text x="${cx}" y="${y(v)-6}" class="total" text-anchor="middle">${fLabel(v)}</text>`;
+    }
+    labels += `<text x="${cx}" y="${H-8}" class="xlab ${r.esHoy ? "hoy" : ""}" text-anchor="middle">${short ? r.label.split(" ")[0] : r.label}</text>`;
+  });
+  el.innerHTML = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${tipo} por día">
+    <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="${c2}"/><stop offset="1" stop-color="${c1}"/></linearGradient></defs>
+    ${grid}${bars}${labels}</svg>`;
+}
+function renderIA(){
+  const rows = semanaRows();
+  const gastoTot = rows.reduce((s, r) => s + (r.gasto || 0), 0);
+  $("#tituloIA").innerHTML = `${icon("cpu",15)} IA: tokens y gasto en soles <span class="tag">S/ ${fmt(gastoTot,2)} en 7 días</span>`;
+  miniBarras($("#chartTokens"), rows, r => r.tokens || 0, "#199EB2", "#4FD8E8", "gi-tok", fmtTokens, v => fmtTokens(v), "Tokens IA");
+  miniBarras($("#chartGasto"),  rows, r => r.gasto  || 0, "#B78C15", "#E9BE57", "gi-gas", v => "S/ " + fmt(v), v => "S/ " + fmt(v,2), "Gasto IA");
+}
+
 function renderTipos(){
   const el = $("#chartTipos"), W = el.clientWidth;
   if (!W) return;
@@ -762,7 +852,7 @@ function renderVista(anim){
   $("#main").classList.toggle("anim", anim && !RM);
   renderHeader();
   if (vista === "hoy"){ renderKPIs(anim); renderInsight(); renderTimeline(); }
-  else { renderResumen(); renderBarras(); renderFoco(); renderTipos(); }
+  else { renderResumen(); renderBarras(); renderFoco(); renderIA(); renderTipos(); }
 }
 function switchVista(v){
   vista = v; localStorage.setItem("mdia:vista", v);
