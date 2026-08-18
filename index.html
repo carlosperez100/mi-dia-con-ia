@@ -1,0 +1,845 @@
+<!doctype html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<script>/* aplica el tema guardado antes del primer pintado */
+try{var t=localStorage.getItem('mdia:tema');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mi Día con IA</title>
+<meta name="description" content="Dashboard de productividad personal en un solo archivo HTML — sin dependencias, sin backend, listo para GitHub Pages.">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" id="metaTheme" content="#0A0C0B">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%2318E29E'/%3E%3Cstop offset='.5' stop-color='%231FAFC0'/%3E%3Cstop offset='1' stop-color='%23E9BE57'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='%230A0C0B'/%3E%3Cpath d='M35 10 15 36h12l-3 18 20-26H32z' fill='url(%23g)'/%3E%3C/svg%3E">
+<style>
+/* ============ Tokens de tema — convención visual GEMSES ============
+   Oscuro (defecto): edición de marca "Ónix Marino"
+     negro #0A0C0B · esmeralda neón #18E29E · aqua #1FAFC0 · oro #E9BE57
+   Claro: edición CLARA de procesos
+     fondo #FBFAF5/#FFF · esmeralda profunda #0E6E5C · azul marino #0A2A4A
+     oro #C9A227 · tinta #0C2624                                        */
+:root{
+  --bg:#0A0C0B; --card:rgba(255,255,255,.045); --card-solid:#101413;
+  --border:rgba(159,180,172,.14); --border2:rgba(159,180,172,.28);
+  --text:#EDF4F0; --text2:#9FB4AC; --text3:#6D8078;
+  --grid:rgba(159,180,172,.13); --axis:rgba(159,180,172,.30);
+  --tipbg:#182220; --tipfg:#EDF4F0; --pointbg:rgba(12,18,16,.84);
+  --brand1:#18E29E; --brand2:#1FAFC0; --brand3:#E9BE57;
+  --up:#18E29E; --dn:#E0705C;
+  --glow1:rgba(24,226,158,.10); --glow2:rgba(233,190,87,.08);
+  --shadow:0 10px 30px rgba(1,8,6,.45);
+  color-scheme:dark;
+}
+[data-theme="light"]{
+  --bg:#FBFAF5; --card:rgba(255,255,255,.92); --card-solid:#ffffff;
+  --border:rgba(12,38,36,.11); --border2:rgba(12,38,36,.22);
+  --text:#0C2624; --text2:#3F5A54; --text3:#7C918B;
+  --grid:rgba(12,38,36,.09); --axis:rgba(12,38,36,.24);
+  --tipbg:#0C2624; --tipfg:#FBFAF5; --pointbg:rgba(255,255,255,.94);
+  --brand1:#0E6E5C; --brand2:#0F86A0; --brand3:#C9A227;
+  --up:#0B7A57; --dn:#C0392B;
+  --glow1:rgba(14,110,92,.10); --glow2:rgba(201,162,39,.10);
+  --shadow:0 10px 26px rgba(12,38,36,.10);
+  color-scheme:light;
+}
+
+/* ============ Base ============ */
+*{box-sizing:border-box;margin:0}
+html{-webkit-text-size-adjust:100%;background:var(--bg)}
+body{
+  font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  background:
+    radial-gradient(900px 620px at 88% -8%, var(--glow2), transparent 60%),
+    radial-gradient(1000px 700px at -12% 12%, var(--glow1), transparent 60%),
+    var(--bg);
+  color:var(--text); min-height:100svh; line-height:1.45;
+}
+svg{font-family:inherit}
+::selection{background:rgba(31,175,192,.35)}
+:focus-visible{outline:2px solid var(--brand2);outline-offset:2px;border-radius:8px}
+button{font-family:inherit}
+
+.wrap{max-width:1060px;margin:0 auto;padding:20px 16px 44px}
+
+/* ============ Encabezado ============ */
+header{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.marca{display:flex;gap:12px;align-items:center;min-width:0}
+.logo{width:42px;height:42px;flex:none;border-radius:13px;display:grid;place-items:center;color:#fff;
+  background:linear-gradient(135deg,#0E6E5C,#0F86A0 55%,#C9A227);
+  box-shadow:0 6px 20px rgba(24,226,158,.25)}
+h1{font-size:clamp(20px,4.5vw,26px);letter-spacing:-.02em;white-space:nowrap}
+.grad{background:linear-gradient(90deg,var(--brand1),var(--brand2),var(--brand3));
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{font-size:12.5px;color:var(--text3)}
+.controles{display:flex;gap:10px;align-items:center;margin-left:auto;flex-wrap:wrap}
+
+/* Controles segmentados (perfil y vistas) */
+.seg{position:relative;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;
+  background:var(--card);border:1px solid var(--border);border-radius:999px;padding:4px;box-shadow:var(--shadow)}
+.seg .thumb{position:absolute;top:4px;left:4px;height:calc(100% - 8px);width:calc(50% - 4px);border-radius:999px;
+  background:linear-gradient(135deg,#0E6E5C,#0F86A0);transition:transform .28s cubic-bezier(.4,0,.2,1)}
+.seg[data-sel="1"] .thumb{transform:translateX(100%)}
+.seg button{position:relative;z-index:1;border:0;background:none;color:var(--text2);cursor:pointer;
+  font-size:13px;font-weight:650;padding:8px 14px;border-radius:999px;
+  display:flex;gap:7px;align-items:center;justify-content:center;transition:color .2s;white-space:nowrap}
+.seg button.on{color:#fff}
+#segPerfil{min-width:232px}
+.tabs{margin:2px 0 16px;width:100%;max-width:340px}
+.icon-btn{width:38px;height:38px;flex:none;border-radius:50%;border:1px solid var(--border);
+  background:var(--card);color:var(--text2);display:grid;place-items:center;cursor:pointer;
+  transition:color .2s,border-color .2s,transform .2s;box-shadow:var(--shadow)}
+.icon-btn:hover{color:var(--text);border-color:var(--border2);transform:rotate(12deg)}
+
+/* ============ Tarjetas ============ */
+.vista{display:flex;flex-direction:column;gap:14px}
+.oculta{display:none!important}
+.card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:16px;
+  box-shadow:var(--shadow);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.card h2{font-size:14.5px;display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.card h2 svg{color:var(--brand2)}
+.tag{font-size:10.5px;font-weight:600;color:var(--text3);border:1px solid var(--border);
+  padding:3px 9px;border-radius:999px;margin-left:auto}
+
+/* ============ KPIs ============ */
+.kpis{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(152px,1fr))}
+.kpi{display:flex;flex-direction:column;gap:8px;padding:14px;overflow:hidden;
+  transition:transform .2s,border-color .2s}
+.kpi:hover{transform:translateY(-2px);border-color:var(--border2)}
+.kpi-top{display:flex;align-items:center;gap:9px;min-width:0}
+.chip{width:30px;height:30px;flex:none;border-radius:9px;display:grid;place-items:center;color:#fff}
+.chip.brand{background:linear-gradient(135deg,var(--brand1),var(--brand3));width:28px;height:28px}
+.kpi-lab{font-size:12.5px;color:var(--text2);font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi-val{font-size:26px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.spark{width:100%;height:30px;display:block}
+.delta{font-size:11.5px;font-weight:700}
+.delta.up{color:var(--up)} .delta.dn{color:var(--dn)}
+.delta i{color:var(--text3);font-style:normal;font-weight:550}
+.kpi.hero{grid-column:1/-1;flex-direction:row;align-items:center;justify-content:space-between;
+  gap:18px;padding:18px;flex-wrap:wrap}
+.hero .kpi-top{margin-bottom:2px}
+.hero .chip{width:38px;height:38px;border-radius:12px}
+.hero .kpi-lab{font-size:13.5px}
+.hero .kpi-val{font-size:clamp(38px,7vw,52px);line-height:1.05;
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.h-l{display:flex;flex-direction:column;gap:6px;min-width:190px}
+.h-r{flex:1;min-width:180px;max-width:380px}
+.hero .spark{height:58px}
+
+/* ============ Insight ============ */
+.insight{position:relative;border:1px solid transparent;
+  background:linear-gradient(var(--card-solid),var(--card-solid)) padding-box,
+             linear-gradient(135deg,rgba(24,226,158,.55),rgba(31,175,192,.5),rgba(233,190,87,.55)) border-box}
+.ins-head{display:flex;align-items:center;gap:9px;margin-bottom:10px;flex-wrap:wrap}
+.ins-head h2{margin:0;font-size:14.5px}
+.insight ul{list-style:none;display:flex;flex-direction:column;gap:7px;font-size:13.5px;color:var(--text2)}
+.insight li::before{content:"✦  ";color:var(--brand2)}
+.insight b{color:var(--text);font-weight:700}
+
+/* ============ Línea de tiempo ============ */
+.timeline{position:relative;margin-top:2px}
+.tl-line{position:absolute;right:0;border-top:1px solid var(--grid)}
+.tl-hlab{position:absolute;left:0;font-size:10.5px;color:var(--text3);font-variant-numeric:tabular-nums}
+.tl-block{position:absolute;border:1px solid;border-left-width:3px;border-radius:10px;padding:5px 9px;
+  overflow:hidden;display:flex;flex-direction:column;justify-content:center;gap:1px}
+.tl-t{font-size:12px;font-weight:650;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tl-m{font-size:10.5px;font-weight:600;color:var(--text3);white-space:nowrap;font-variant-numeric:tabular-nums}
+.tl-block.sm{padding:2px 9px}
+.tl-block.sm .tl-m{display:none}
+.tl-block.sm .tl-t{font-size:11px}
+.tl-point{position:absolute;display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text2);
+  background:var(--pointbg);border:1px solid var(--border);border-radius:999px;padding:3px 10px 3px 8px;
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.tl-point .dot{width:8px;height:8px;border-radius:50%;flex:none}
+.tl-point b{font-size:11px;color:var(--text);font-variant-numeric:tabular-nums}
+.tl-pt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ============ Semana ============ */
+.resumen{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.mini{padding:14px}
+.mini .v{font-size:22px;font-weight:800;letter-spacing:-.02em;
+  background:linear-gradient(90deg,var(--brand1),var(--brand3));
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.mini .l{font-size:11.5px;color:var(--text3);margin-top:2px}
+.legend{display:flex;flex-wrap:wrap;gap:8px 14px;margin:-2px 0 10px;font-size:12px;color:var(--text2)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.chart{width:100%;overflow:hidden}
+.gl{stroke:var(--grid)}
+.baseline{stroke:var(--axis)}
+.tick{fill:var(--text3);font-size:11px;font-variant-numeric:tabular-nums}
+.xlab{fill:var(--text2);font-size:11.5px}
+.xlab.hoy{fill:var(--text);font-weight:700}
+.total{fill:var(--text3);font-size:10.5px;font-weight:600;font-variant-numeric:tabular-nums}
+.seg-bar{cursor:pointer}
+.seg-bar:hover{filter:brightness(1.18)}
+.dotpt{cursor:pointer}
+
+/* ============ Pie, tooltip, animaciones ============ */
+footer{margin-top:28px;text-align:center;font-size:12px;color:var(--text3);
+  display:flex;flex-direction:column;gap:5px}
+.sep{height:1px;background:linear-gradient(90deg,transparent,var(--border2),transparent);margin-bottom:14px}
+footer code{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:1px 6px;font-size:11px}
+#tip{position:fixed;z-index:60;background:var(--tipbg);color:var(--tipfg);font-size:12px;line-height:1.4;
+  padding:7px 10px;border-radius:9px;border:1px solid var(--border2);box-shadow:0 8px 24px rgba(0,0,0,.35);
+  opacity:0;pointer-events:none;transition:opacity .12s;max-width:280px}
+#tip.on{opacity:1}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}}
+@keyframes fadeIn{from{opacity:0}}
+.anim .card{animation:rise .5s cubic-bezier(.2,.7,.3,1) both}
+.anim .tl-block,.anim .tl-point{animation:fadeIn .55s both}
+.anim .seg-bar,.anim .hrow{animation:rise .55s cubic-bezier(.2,.7,.3,1) both}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (min-width:720px){.wrap{padding:26px 22px 50px}.card{padding:18px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="marca">
+      <div class="logo" id="logo" aria-hidden="true"></div>
+      <div>
+        <h1>Mi Día <span class="grad">con IA</span></h1>
+        <p class="sub" id="subtitulo"></p>
+      </div>
+    </div>
+    <div class="controles">
+      <div class="seg" id="segPerfil" role="tablist" aria-label="Perfil">
+        <div class="thumb" aria-hidden="true"></div>
+        <button type="button" role="tab" data-v="ingeniero" aria-selected="true"></button>
+        <button type="button" role="tab" data-v="contador" aria-selected="false"></button>
+      </div>
+      <button type="button" class="icon-btn" id="btnTema" aria-label="Cambiar tema claro/oscuro"></button>
+    </div>
+  </header>
+
+  <nav class="seg tabs" id="segVista" role="tablist" aria-label="Vista">
+    <div class="thumb" aria-hidden="true"></div>
+    <button type="button" role="tab" data-v="hoy" aria-selected="true"></button>
+    <button type="button" role="tab" data-v="semana" aria-selected="false"></button>
+  </nav>
+
+  <main id="main">
+    <section id="vistaHoy" class="vista" aria-label="Vista de hoy">
+      <div class="kpis" id="kpis"></div>
+      <article class="card insight" id="insight"></article>
+      <article class="card">
+        <h2 id="tituloTimeline"></h2>
+        <div id="timeline" class="timeline"></div>
+      </article>
+    </section>
+
+    <section id="vistaSemana" class="vista oculta" aria-label="Vista de la semana">
+      <div class="resumen" id="resumenSemana"></div>
+      <article class="card">
+        <h2 id="tituloBarras"></h2>
+        <div class="legend" id="legendBarras"></div>
+        <div id="chartBarras" class="chart"></div>
+      </article>
+      <article class="card">
+        <h2 id="tituloFoco"></h2>
+        <div id="chartFoco" class="chart"></div>
+      </article>
+      <article class="card">
+        <h2 id="tituloTipos"></h2>
+        <div id="chartTipos" class="chart"></div>
+      </article>
+    </section>
+  </main>
+
+  <footer>
+    <div class="sep" aria-hidden="true"></div>
+    <div>⚡ <b>Mi Día con IA</b> · un solo archivo · 0 dependencias · listo para GitHub Pages</div>
+    <div>Datos de ejemplo: edita la constante <code>SEED</code> al inicio del <code>&lt;script&gt;</code> para cargar los tuyos.</div>
+  </footer>
+</div>
+
+<div id="tip" role="tooltip"></div>
+<noscript><p style="text-align:center;padding:20px">Este dashboard necesita JavaScript para dibujarse.</p></noscript>
+
+<script>
+/* ================================================================
+   ★★★  DATOS SEMILLA — EDITA AQUÍ  ★★★
+   ----------------------------------------------------------------
+   · Dos perfiles: "ingeniero" y "contador". El toggle del encabezado
+     cambia etiquetas, iconos, colores y datos.
+   · `metricas` define cada KPI:  id, label, icono y degradado (c1→c2).
+     "foco" se mide en HORAS; el resto son CONTEOS.
+   · `hoy.eventos` es el día detallado:
+       - con  `fin`  → BLOQUE con duración (reuniones, foco, llamadas…)
+       - sin  `fin`  → HITO puntual (commits, PRs, tickets, facturas…)
+       - `cantidad`  → cuánto suma el hito a su KPI (opcional, def. 1)
+       - `tipo` debe ser el id de una métrica ("descanso" no suma a nada)
+   · `semana`: 7 filas. Las 6 primeras traen totales; la última es HOY
+     y sus totales SE CALCULAN SOLOS a partir de `hoy.eventos`.
+   ================================================================ */
+const SEED = {
+  ingeniero: {
+    nombre: "Ingeniero de software",
+    /* Colores = paleta GEMSES (esmeralda/oro/marino/rojo/aqua/vino, validada
+       para daltonismo). `stack` es el orden de apilado/leyenda; el foco toma
+       el degradado de marca del tema (esmeralda neón → oro), no lleva c1/c2. */
+    metricas: [
+      { id:"foco",      label:"Horas de foco",    unidad:"h", decimales:1, hero:true, icono:"zap" },
+      { id:"reuniones", label:"Reuniones",        icono:"cal",    stack:3, c1:"#C0392B", c2:"#E0705C" },
+      { id:"llamadas",  label:"Llamadas",         icono:"tel",    stack:1, c1:"#B78C15", c2:"#E9BE57" },
+      { id:"commits",   label:"Commits / push",   icono:"commit", stack:0, c1:"#0F9D74", c2:"#18E29E" },
+      { id:"prs",       label:"Pull requests",    icono:"pr",     stack:4, c1:"#199EB2", c2:"#4FD8E8" },
+      { id:"reviews",   label:"Code reviews",     icono:"eye",    stack:5, c1:"#9C4A78", c2:"#C97BA4" },
+      { id:"tickets",   label:"Tickets cerrados", icono:"check",  stack:2, c1:"#3468B0", c2:"#6C9BD8" },
+    ],
+    hoy: {
+      fecha: "2026-08-17",
+      eventos: [
+        { inicio:"08:30", fin:"08:45", tipo:"reuniones", titulo:"Daily standup del equipo" },
+        { inicio:"08:45", fin:"10:15", tipo:"foco",      titulo:"Feature: exportación de reportes a PDF" },
+        { inicio:"09:40",              tipo:"commits",   titulo:"push: parser de plantillas", cantidad:2 },
+        { inicio:"10:15", fin:"10:30", tipo:"llamadas",  titulo:"Sync con DevOps por el deploy" },
+        { inicio:"10:30", fin:"11:00", tipo:"reviews",   titulo:"Review PR #142 · API de pagos" },
+        { inicio:"11:00", fin:"12:30", tipo:"foco",      titulo:"Refactor del módulo de autenticación" },
+        { inicio:"11:45",              tipo:"commits",   titulo:"refactor: middleware de sesiones" },
+        { inicio:"12:30", fin:"13:30", tipo:"descanso",  titulo:"Almuerzo" },
+        { inicio:"13:30", fin:"14:00", tipo:"reuniones", titulo:"Refinamiento del backlog" },
+        { inicio:"14:00", fin:"15:30", tipo:"foco",      titulo:"Fix: bug intermitente en websockets" },
+        { inicio:"15:20",              tipo:"commits",   titulo:"push: reconexión con backoff", cantidad:3 },
+        { inicio:"15:30",              tipo:"prs",       titulo:"PR #145 abierto · reconexión websockets" },
+        { inicio:"15:35", fin:"15:50", tipo:"llamadas",  titulo:"Cliente: incidencia en producción" },
+        { inicio:"15:50", fin:"16:30", tipo:"reviews",   titulo:"Review PR #143 · migración de BD" },
+        { inicio:"16:30",              tipo:"tickets",   titulo:"Cerrados BUG-311 y BUG-317", cantidad:2 },
+        { inicio:"16:30", fin:"17:30", tipo:"foco",      titulo:"Tests e2e del release 2.4" },
+        { inicio:"17:10",              tipo:"commits",   titulo:"test: suite e2e de pagos" },
+        { inicio:"17:30",              tipo:"prs",       titulo:"PR #145 aprobado y mergeado" },
+        { inicio:"17:35", fin:"17:50", tipo:"reuniones", titulo:"Cierre del día con el equipo" },
+        { inicio:"17:50",              tipo:"tickets",   titulo:"Cerrado TASK-208" },
+      ],
+    },
+    semana: [
+      { fecha:"2026-08-11", foco:4,   reuniones:4, llamadas:3, commits:6,  prs:1, reviews:2, tickets:2 },
+      { fecha:"2026-08-12", foco:5.5, reuniones:2, llamadas:1, commits:9,  prs:2, reviews:1, tickets:4 },
+      { fecha:"2026-08-13", foco:3,   reuniones:5, llamadas:4, commits:4,  prs:0, reviews:3, tickets:1 },
+      { fecha:"2026-08-14", foco:6,   reuniones:1, llamadas:2, commits:11, prs:3, reviews:2, tickets:5 },
+      { fecha:"2026-08-15", foco:1.5, reuniones:0, llamadas:0, commits:2,  prs:0, reviews:0, tickets:1 },
+      { fecha:"2026-08-16", foco:0,   reuniones:0, llamadas:0, commits:0,  prs:0, reviews:0, tickets:0 },
+      { fecha:"2026-08-17", esHoy:true }, // ← HOY: totales auto-calculados desde hoy.eventos
+    ],
+  },
+
+  contador: {
+    nombre: "Contador",
+    metricas: [
+      { id:"foco",           label:"Horas de foco",       unidad:"h", decimales:1, hero:true, icono:"zap" },
+      { id:"reuniones",      label:"Reuniones",           icono:"cal",     stack:3, c1:"#C0392B", c2:"#E0705C" },
+      { id:"llamadas",       label:"Llamadas",            icono:"tel",     stack:1, c1:"#B78C15", c2:"#E9BE57" },
+      { id:"asientos",       label:"Asientos registrados",icono:"libro",   stack:0, c1:"#0F9D74", c2:"#18E29E" },
+      { id:"facturas",       label:"Facturas emitidas",   icono:"recibo",  stack:4, c1:"#199EB2", c2:"#4FD8E8" },
+      { id:"conciliaciones", label:"Conciliaciones",      icono:"sync",    stack:5, c1:"#9C4A78", c2:"#C97BA4" },
+      { id:"cierres",        label:"Cierres completados", icono:"candado", stack:2, c1:"#3468B0", c2:"#6C9BD8" },
+    ],
+    hoy: {
+      fecha: "2026-08-17",
+      eventos: [
+        { inicio:"08:30", fin:"09:00", tipo:"reuniones",      titulo:"Comité de gerencia · flujo de caja" },
+        { inicio:"09:00", fin:"10:30", tipo:"foco",           titulo:"Conciliación bancaria BCP (soles y dólares)" },
+        { inicio:"10:20",              tipo:"conciliaciones", titulo:"BCP soles y dólares conciliadas", cantidad:2 },
+        { inicio:"10:30", fin:"10:45", tipo:"llamadas",       titulo:"SUNAT: cronograma de vencimientos" },
+        { inicio:"10:45", fin:"12:15", tipo:"foco",           titulo:"Registro de compras de la quincena" },
+        { inicio:"11:55",              tipo:"asientos",       titulo:"Asientos de compras registrados", cantidad:14 },
+        { inicio:"12:15",              tipo:"facturas",       titulo:"Facturas emitidas · serie F001", cantidad:6 },
+        { inicio:"12:20", fin:"13:15", tipo:"descanso",       titulo:"Almuerzo" },
+        { inicio:"13:15", fin:"13:45", tipo:"reuniones",      titulo:"Cliente Alfa: avance del cierre de julio" },
+        { inicio:"13:45", fin:"15:15", tipo:"foco",           titulo:"Cierre contable de julio · Cliente Alfa" },
+        { inicio:"15:05",              tipo:"asientos",       titulo:"Ajustes y provisiones", cantidad:8 },
+        { inicio:"15:15",              tipo:"cierres",        titulo:"Cierre de julio de Cliente Alfa ✔" },
+        { inicio:"15:20", fin:"15:35", tipo:"llamadas",       titulo:"Banco: confirmación de detracciones" },
+        { inicio:"15:35", fin:"16:20", tipo:"foco",           titulo:"Conciliación de detracciones SPOT" },
+        { inicio:"16:10",              tipo:"conciliaciones", titulo:"Cuenta de detracciones conciliada" },
+        { inicio:"16:20",              tipo:"facturas",       titulo:"Notas de crédito + factura F001-1042", cantidad:3 },
+        { inicio:"16:20", fin:"16:50", tipo:"reuniones",      titulo:"Planificación de declaraciones (PDT/PLE)" },
+        { inicio:"16:50", fin:"17:35", tipo:"foco",           titulo:"Borrador del PLE de agosto" },
+        { inicio:"17:30",              tipo:"cierres",        titulo:"Pre-cierre de caja chica ✔" },
+      ],
+    },
+    semana: [
+      { fecha:"2026-08-11", foco:4.5, reuniones:3, llamadas:4, asientos:18, facturas:6,  conciliaciones:2, cierres:1 },
+      { fecha:"2026-08-12", foco:5,   reuniones:2, llamadas:5, asientos:24, facturas:8,  conciliaciones:3, cierres:1 },
+      { fecha:"2026-08-13", foco:3.5, reuniones:4, llamadas:6, asientos:15, facturas:12, conciliaciones:1, cierres:0 },
+      { fecha:"2026-08-14", foco:6.5, reuniones:2, llamadas:3, asientos:30, facturas:9,  conciliaciones:4, cierres:3 },
+      { fecha:"2026-08-15", foco:2,   reuniones:0, llamadas:1, asientos:6,  facturas:0,  conciliaciones:1, cierres:0 },
+      { fecha:"2026-08-16", foco:0,   reuniones:0, llamadas:0, asientos:0,  facturas:0,  conciliaciones:0, cierres:0 },
+      { fecha:"2026-08-17", esHoy:true }, // ← HOY: totales auto-calculados desde hoy.eventos
+    ],
+  },
+};
+/* ============ FIN DE LOS DATOS SEMILLA ============ */
+
+/* ---------- Utilidades ---------- */
+const $  = s => document.querySelector(s);
+const RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const DIAS  = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
+const DIASL = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
+const MESES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+const DESCANSO = { label:"Descanso", c1:"#64748b", c2:"#94a3b8" };
+
+const parseFecha = s => { const [y,m,d] = s.split("-").map(Number); return new Date(y, m-1, d); };
+const toMin = h => { const [H,M] = h.split(":").map(Number); return H*60 + M; };
+const fmt = (n, dec=0) => n.toLocaleString("es-PE", { minimumFractionDigits:dec, maximumFractionDigits:dec });
+const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+const rgba = (hex, a) => { const n = parseInt(hex.slice(1),16); return `rgba(${n>>16&255},${n>>8&255},${n&255},${a})`; };
+const etiquetaDia = f => { const d = parseFecha(f); return DIAS[d.getDay()] + " " + d.getDate(); };
+const fechaLarga  = f => { const d = parseFecha(f); return `${DIASL[d.getDay()]}, ${d.getDate()} de ${MESES[d.getMonth()]} de ${d.getFullYear()}`; };
+const durTxt = m => { const h = Math.floor(m/60), r = m%60; return h ? (r ? `${h} h ${r} min` : `${h} h`) : `${r} min`; };
+const niceStep = raw => { if (raw<=0) return 1; const p = Math.pow(10, Math.floor(Math.log10(raw)));
+  for (const m of [1,1.5,2,2.5,3,4,5,6,8,10]) { const s = m*p; if (s >= raw-1e-9) return s; } return 10*p; };
+
+/* Curva suave (catmull-rom → bézier); `base` acota para no perforar la línea de cero */
+function smooth(pts, base){
+  if (pts.length < 2) return "";
+  if (pts.length === 2) return `M${pts[0].x} ${pts[0].y}L${pts[1].x} ${pts[1].y}`;
+  const cl = v => base == null ? v : Math.min(v, base);
+  let d = `M${pts[0].x} ${pts[0].y}`;
+  for (let i = 0; i < pts.length-1; i++){
+    const p0 = pts[i-1] || pts[i], p1 = pts[i], p2 = pts[i+1], p3 = pts[i+2] || p2;
+    d += `C${p1.x+(p2.x-p0.x)/6} ${cl(p1.y+(p2.y-p0.y)/6)} ${p2.x-(p3.x-p1.x)/6} ${cl(p2.y-(p3.y-p1.y)/6)} ${p2.x} ${p2.y}`;
+  }
+  return d;
+}
+/* rect con solo las esquinas SUPERIORES redondeadas (extremo de dato) */
+const topRect = (x,y,w,h,r) => { r = Math.max(0, Math.min(r, h, w/2));
+  return `M${x} ${y+h}v${-(h-r)}q0 ${-r} ${r} ${-r}h${w-2*r}q${r} 0 ${r} ${r}v${h-r}z`; };
+/* rect horizontal con solo el extremo DERECHO redondeado */
+const rightRect = (x,y,w,h,r) => { r = Math.max(0, Math.min(r, w, h/2));
+  return `M${x} ${y}h${w-r}q${r} 0 ${r} ${r}v${h-2*r}q0 ${r} ${-r} ${r}h${-(w-r)}z`; };
+
+/* ---------- Iconos SVG (trazo, estilo feather) ---------- */
+const ICONS = {
+  zap:'<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>',
+  cal:'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+  tel:'<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.08 4.18 2 2 0 0 1 4.06 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>',
+  commit:'<circle cx="12" cy="12" r="3.5"/><line x1="2.5" y1="12" x2="8.5" y2="12"/><line x1="15.5" y1="12" x2="21.5" y2="12"/>',
+  pr:'<circle cx="6" cy="6" r="2.6"/><circle cx="6" cy="18" r="2.6"/><circle cx="18" cy="18" r="2.6"/><path d="M6 8.6v6.8"/><path d="M13 6h2.5A2.5 2.5 0 0 1 18 8.5v6.9"/><polyline points="15.5 3.5 13 6 15.5 8.5"/>',
+  eye:'<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>',
+  check:'<path d="M22 11.1V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>',
+  libro:'<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>',
+  recibo:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/>',
+  sync:'<polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>',
+  candado:'<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  code:'<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>',
+  calc:'<rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6.5" x2="16" y2="6.5"/><line x1="8" y1="11" x2="8.01" y2="11"/><line x1="12" y1="11" x2="12.01" y2="11"/><line x1="16" y1="11" x2="16.01" y2="11"/><line x1="8" y1="15" x2="8.01" y2="15"/><line x1="12" y1="15" x2="12.01" y2="15"/><line x1="16" y1="15" x2="16.01" y2="15"/><line x1="8" y1="19" x2="12" y2="19"/><line x1="16" y1="19" x2="16.01" y2="19"/>',
+  spark:'<path d="M12 2.5l2 6 6 2-6 2-2 6-2-6-6-2 6-2z"/><path d="M19.5 14.5l.8 2.4 2.4.8-2.4.8-.8 2.4-.8-2.4-2.4-.8 2.4-.8z"/>',
+  sol:'<circle cx="12" cy="12" r="4.2"/><line x1="12" y1="1.5" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22.5"/><line x1="4.6" y1="4.6" x2="6.3" y2="6.3"/><line x1="17.7" y1="17.7" x2="19.4" y2="19.4"/><line x1="1.5" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22.5" y2="12"/><line x1="4.6" y1="19.4" x2="6.3" y2="17.7"/><line x1="17.7" y1="6.3" x2="19.4" y2="4.6"/>',
+  luna:'<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>',
+  barras:'<line x1="6" y1="20" x2="6" y2="14"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="18" y1="20" x2="18" y2="10"/>',
+  reloj:'<circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 13.5"/>',
+};
+const icon = (n, s=16) =>
+  `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n]||""}</svg>`;
+
+/* ---------- Estado ---------- */
+let perfil = localStorage.getItem("mdia:perfil") || "ingeniero";
+let vista  = localStorage.getItem("mdia:vista")  || "hoy";
+if (!SEED[perfil]) perfil = "ingeniero";
+if (!["hoy","semana"].includes(vista)) vista = "hoy";
+let P, TOT;
+
+function setPerfil(p){
+  perfil = p; P = SEED[p]; TOT = computeTotals(P);
+  localStorage.setItem("mdia:perfil", p);
+}
+const metricById = id => P.metricas.find(m => m.id === id);
+
+/* Totales de HOY a partir de los eventos del día detallado */
+function computeTotals(prof){
+  const tot = {}; prof.metricas.forEach(m => tot[m.id] = 0);
+  for (const e of prof.hoy.eventos){
+    if (e.tipo === "foco" && e.fin) tot.foco += (toMin(e.fin) - toMin(e.inicio)) / 60;
+    else if (tot[e.tipo] !== undefined && e.tipo !== "foco") tot[e.tipo] += e.cantidad || 1;
+  }
+  tot.foco = Math.round(tot.foco * 100) / 100;
+  return tot;
+}
+/* Las 7 filas de la semana, con HOY ya calculado */
+function semanaRows(){
+  return P.semana.map(r => {
+    const base = r.esHoy ? { ...r, ...TOT } : { ...r };
+    base.label = etiquetaDia(r.fecha);
+    base.tipLabel = base.label + (r.esHoy ? " (hoy)" : "");
+    return base;
+  });
+}
+const tiposConteo = () => P.metricas.filter(m => !m.hero).slice().sort((a, b) => (a.stack ?? 9) - (b.stack ?? 9));
+/* Colores de marca vigentes según el tema (para el KPI héroe y su sparkline) */
+const BRAND = () => {
+  const cs = getComputedStyle(document.documentElement);
+  return ["--brand1","--brand2","--brand3"].map(v => cs.getPropertyValue(v).trim());
+};
+
+/* ---------- Sparkline (mini-tendencia de 7 días) ---------- */
+function spark(vals, c1, c2, big){
+  const w = 120, h = big ? 44 : 26, max = Math.max(...vals, 0.001);
+  const sx = w / (vals.length - 1);
+  const pts = vals.map((v,i) => ({ x: +(i*sx).toFixed(1), y: +(h - 2.5 - (v/max)*(h-7)).toFixed(1) }));
+  const d = smooth(pts, h-2.5);
+  const last = pts[pts.length-1];
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true">
+    <path d="${d}L${w} ${h}L0 ${h}z" fill="${rgba(c1,.13)}" stroke="none"/>
+    <path d="${d}" fill="none" stroke="${c1}" stroke-width="2" vector-effect="non-scaling-stroke"/>
+    <circle cx="${last.x}" cy="${last.y}" r="2.8" fill="${c2}"/></svg>`;
+}
+
+/* ---------- Animación numérica ---------- */
+function countUp(el, to, dec, suf, anim){
+  if (!el) return;
+  /* sin animación (o pestaña oculta: rAF pausado) → valor directo */
+  if (!anim || RM || document.hidden){ el.textContent = fmt(to, dec) + suf; return; }
+  const t0 = performance.now(), dur = 680;
+  const step = t => {
+    const k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+    el.textContent = fmt(to * e, dec) + suf;
+    if (k < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+/* ================= VISTA HOY ================= */
+function renderKPIs(anim){
+  const rows = semanaRows(), prev = rows.slice(0, 6);
+  $("#kpis").innerHTML = P.metricas.map((m, i) => {
+    const v = TOT[m.id] || 0, dec = m.decimales || 0, suf = m.unidad ? " " + m.unidad : "";
+    const hist = rows.map(r => r[m.id] || 0);
+    const avg = prev.reduce((s, r) => s + (r[m.id] || 0), 0) / prev.length;
+    let delta = "";
+    if (avg > 0){
+      const p = Math.round((v / avg - 1) * 100), up = p >= 0;
+      delta = `<span class="delta ${up ? "up" : "dn"}">${up ? "▲" : "▼"} ${up ? "+" : "−"}${fmt(Math.abs(p))} % <i>vs promedio semanal</i></span>`;
+    } else if (v > 0) delta = `<span class="delta up">✦ <i>primer registro de la semana</i></span>`;
+    if (m.hero){
+      const [b1,, b3] = BRAND();
+      return `
+      <article class="card kpi hero" style="animation-delay:${i*45}ms">
+        <div class="h-l">
+          <div class="kpi-top"><span class="chip" style="background:linear-gradient(135deg,${b1},${b3});box-shadow:0 4px 16px ${rgba(b1,.30)}">${icon(m.icono,20)}</span><span class="kpi-lab">${m.label} · hoy</span></div>
+          <div class="kpi-val" style="background-image:linear-gradient(90deg,${b1},${b3})"><span id="num-${m.id}"></span></div>
+          ${delta}
+        </div>
+        <div class="h-r">${spark(hist, b1, b3, true)}</div>
+      </article>`;
+    }
+    const chipCss = `background:linear-gradient(135deg,${m.c1},${m.c2});box-shadow:0 4px 16px ${rgba(m.c1,.35)}`;
+    return `
+      <article class="card kpi" style="animation-delay:${i*45}ms">
+        <div class="kpi-top"><span class="chip" style="${chipCss}">${icon(m.icono,15)}</span><span class="kpi-lab">${m.label}</span></div>
+        <div class="kpi-val"><span id="num-${m.id}"></span></div>
+        ${spark(hist, m.c1, m.c2, false)}
+        ${delta}
+      </article>`;
+  }).join("");
+  P.metricas.forEach(m => countUp($("#num-" + m.id), TOT[m.id] || 0, m.decimales || 0, m.unidad ? " " + m.unidad : "", anim));
+}
+
+function renderInsight(){
+  const rows = semanaRows(), prev = rows.slice(0, 6), frases = [];
+  const avgF = prev.reduce((s, r) => s + (r.foco || 0), 0) / prev.length;
+  const f = TOT.foco || 0;
+  if (avgF > 0){
+    const p = Math.round((f / avgF - 1) * 100);
+    const cmp = Math.abs(p) < 5 ? "en línea con" : (p > 0 ? `un <b>${fmt(p)} %</b> por encima de` : `un <b>${fmt(-p)} %</b> por debajo de`);
+    frases.push(`Hoy llevas <b>${fmt(f,1)} h de foco</b>, ${cmp} tu promedio de la semana (${fmt(avgF,1)} h).`);
+  }
+  let best = null;
+  P.metricas.filter(m => !m.hero && !["reuniones","llamadas"].includes(m.id)).forEach(m => {
+    const avg = prev.reduce((s, r) => s + (r[m.id] || 0), 0) / prev.length;
+    const v = TOT[m.id] || 0;
+    if (v > 0 && avg > 0){ const r = v / avg; if (!best || r > best.r) best = { m, v, avg, r }; }
+  });
+  if (best) frases.push(`Actividad destacada: <b>${best.m.label.toLowerCase()}</b> con <b>${fmt(best.v)}</b> hoy (media diaria: ${fmt(best.avg,1)}).`);
+  const inter = (TOT.reuniones || 0) + (TOT.llamadas || 0);
+  frases.push(inter >= 5
+    ? `Registraste <b>${fmt(inter)} interrupciones</b> entre reuniones y llamadas: agruparlas en un solo tramo liberaría un bloque extra de 90 min de foco.`
+    : `Buen balance: solo ${fmt(inter)} interrupciones entre reuniones y llamadas.`);
+  $("#insight").innerHTML = `
+    <div class="ins-head"><span class="chip brand">${icon("spark",15)}</span><h2>Insight del día</h2>
+    <span class="tag">IA local · reglas sobre tus datos, sin backend</span></div>
+    <ul>${frases.map(x => `<li>${x}</li>`).join("")}</ul>`;
+}
+
+function renderTimeline(){
+  const el = $("#timeline"), W = el.clientWidth;
+  if (!W) return;
+  const evs = [...P.hoy.eventos].sort((a, b) => toMin(a.inicio) - toMin(b.inicio));
+  $("#tituloTimeline").innerHTML = `${icon("reloj",15)} Línea de tiempo de hoy <span class="tag">${evs.length} eventos · ${etiquetaDia(P.hoy.fecha)}</span>`;
+  if (!evs.length){ el.innerHTML = ""; return; }
+  const t0 = Math.floor(Math.min(...evs.map(e => toMin(e.inicio))) / 60) * 60;
+  const t1 = Math.ceil (Math.max(...evs.map(e => toMin(e.fin || e.inicio))) / 60) * 60;
+  const pxh = W < 560 ? 58 : 66, rulerW = 46;
+  const y = m => (m - t0) / 60 * pxh + 10;
+  const H = y(t1) + 16;
+  const blocksW = Math.round((W - rulerW) * (W < 640 ? 0.55 : 0.60));
+  const chipX = rulerW + blocksW + 10, chipW = W - chipX - 2;
+  let html = "";
+  for (let m = t0; m <= t1; m += 60){
+    html += `<div class="tl-line" style="top:${y(m)}px;left:${rulerW}px"></div>
+             <span class="tl-hlab" style="top:${y(m)-7}px">${String(m/60).padStart(2,"0")}:00</span>`;
+  }
+  /* bloques, con carriles si el usuario mete solapes */
+  const blocks = evs.filter(e => e.fin).map(e => ({ e, s: toMin(e.inicio), t: toMin(e.fin) }));
+  const clusters = [];
+  for (const b of blocks){
+    const c = clusters[clusters.length - 1];
+    if (c && b.s < c.end){ c.items.push(b); c.end = Math.max(c.end, b.t); }
+    else clusters.push({ items:[b], end: b.t });
+  }
+  let bi = 0;
+  for (const c of clusters){
+    const lanes = [];
+    for (const b of c.items){
+      let li = lanes.findIndex(end => end <= b.s);
+      if (li < 0){ li = lanes.length; lanes.push(b.t); } else lanes[li] = b.t;
+      b.lane = li;
+    }
+    const n = lanes.length, laneW = (blocksW - (n - 1) * 6) / n;
+    for (const b of c.items){
+      const m = metricById(b.e.tipo) || DESCANSO;
+      const c1 = m.c1 || BRAND()[0];   /* el foco toma la esmeralda de marca */
+      const top = y(b.s) + 1, hgt = y(b.t) - y(b.s) - 3;
+      html += `<div class="tl-block ${hgt < 40 ? "sm" : ""}" data-tip="${esc(`${b.e.inicio}–${b.e.fin} · ${m.label} · ${b.e.titulo}`)}"
+        style="top:${top}px;left:${rulerW + b.lane * (laneW + 6)}px;width:${laneW}px;height:${hgt}px;
+        background:${rgba(c1,.13)};border-color:${rgba(c1,.42)};border-left-color:${c1};animation-delay:${bi*30}ms">
+        <div class="tl-t">${esc(b.e.titulo)}</div>
+        <div class="tl-m">${b.e.inicio}–${b.e.fin} · ${durTxt(b.t - b.s)}</div></div>`;
+      bi++;
+    }
+  }
+  /* hitos puntuales (columna derecha) */
+  let lastY = -99;
+  evs.filter(e => !e.fin).forEach((e, i) => {
+    const m = metricById(e.tipo) || DESCANSO, q = e.cantidad || 1;
+    const c1 = m.c1 || BRAND()[0];
+    let yy = y(toMin(e.inicio)) - 11;
+    if (yy < lastY + 26) yy = lastY + 26;
+    lastY = yy;
+    html += `<div class="tl-point" data-tip="${esc(`${e.inicio} · ${m.label} +${q} · ${e.titulo}`)}"
+      style="top:${yy}px;left:${chipX}px;max-width:${chipW}px;animation-delay:${i*40}ms">
+      <span class="dot" style="background:${c1}"></span><b>+${q}</b><span class="tl-pt">${esc(e.titulo)}</span></div>`;
+  });
+  el.style.height = Math.max(H, lastY + 30) + "px";
+  el.innerHTML = html;
+}
+
+/* ================= VISTA SEMANA ================= */
+function renderResumen(){
+  const rows = semanaRows(), tipos = tiposConteo();
+  const focoTot = rows.reduce((s, r) => s + (r.foco || 0), 0);
+  const acts = rows.reduce((s, r) => s + tipos.reduce((a, m) => a + (r[m.id] || 0), 0), 0);
+  const totalDia = r => tipos.reduce((a, m) => a + (r[m.id] || 0), 0);
+  const mejor = rows.reduce((a, b) => totalDia(b) > totalDia(a) ? b : a);
+  $("#resumenSemana").innerHTML = [
+    { v: fmt(focoTot,1) + " h", l: "de foco en la semana" },
+    { v: fmt(acts), l: "actividades registradas" },
+    { v: mejor.label, l: "día más productivo" },
+  ].map((c, i) => `<article class="card mini" style="animation-delay:${i*45}ms"><div class="v">${c.v}</div><div class="l">${c.l}</div></article>`).join("");
+}
+
+function renderBarras(){
+  const el = $("#chartBarras"), W = el.clientWidth;
+  if (!W) return;
+  const rows = semanaRows(), tipos = tiposConteo();
+  $("#tituloBarras").innerHTML = `${icon("barras",15)} Actividades por día <span class="tag">apiladas por tipo</span>`;
+  $("#legendBarras").innerHTML = tipos.map(m =>
+    `<span><i style="background:linear-gradient(135deg,${m.c1},${m.c2})"></i>${m.label}</span>`).join("");
+  const H = 290, pl = 34, pr = 8, pt = 18, pb = 30, ih = H - pt - pb;
+  const totals = rows.map(r => tipos.reduce((s, m) => s + (r[m.id] || 0), 0));
+  const step = niceStep(Math.max(...totals, 1) / 4), maxY = step * 4;
+  const band = (W - pl - pr) / rows.length, bw = Math.min(band * 0.55, 44);
+  const short = band < 46;
+  const y = v => pt + ih - (v / maxY) * ih;
+  let defs = "", grid = "", bars = "", labels = "";
+  tipos.forEach(m => defs += `<linearGradient id="gb-${m.id}" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="${m.c2}"/><stop offset="1" stop-color="${m.c1}"/></linearGradient>`);
+  for (let t = 0; t <= 4; t++){
+    const yy = y(step * t);
+    grid += `<line x1="${pl}" x2="${W-pr}" y1="${yy}" y2="${yy}" class="${t === 0 ? "baseline" : "gl"}"/>
+             <text x="${pl-6}" y="${yy+4}" class="tick" text-anchor="end">${fmt(step*t)}</text>`;
+  }
+  rows.forEach((r, i) => {
+    const cx = pl + band * i + band / 2, x = cx - bw / 2;
+    let cum = 0;
+    const segs = tipos.map(m => ({ m, v: r[m.id] || 0 })).filter(s => s.v > 0);
+    segs.forEach((s, si) => {
+      const yTop = y(cum + s.v), yBot = y(cum);
+      const gTop = si === segs.length - 1 ? 0 : 1, gBot = si === 0 ? 0 : 1;   /* 2px de aire entre segmentos */
+      const hpx = Math.max(1, yBot - gBot - (yTop + gTop));
+      const d = si === segs.length - 1
+        ? topRect(x, yTop + gTop, bw, hpx, 4)
+        : `M${x} ${yTop+gTop}h${bw}v${hpx}h${-bw}z`;
+      bars += `<path class="seg-bar" d="${d}" fill="url(#gb-${s.m.id})" style="animation-delay:${i*40}ms"
+        data-tip="${esc(`${r.tipLabel} · ${s.m.label}: ${fmt(s.v)}`)}"/>`;
+      cum += s.v;
+    });
+    labels += `<text x="${cx}" y="${H-10}" class="xlab ${r.esHoy ? "hoy" : ""}" text-anchor="middle">${short ? r.label.split(" ")[0] : r.label}</text>`;
+    if (totals[i] > 0) labels += `<text x="${cx}" y="${y(totals[i]) - 6}" class="total" text-anchor="middle">${fmt(totals[i])}</text>`;
+  });
+  el.innerHTML = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Actividades por día de la semana">
+    <defs>${defs}</defs>${grid}${bars}${labels}</svg>`;
+}
+
+function renderFoco(){
+  const el = $("#chartFoco"), W = el.clientWidth;
+  if (!W) return;
+  const rows = semanaRows();
+  $("#tituloFoco").innerHTML = `${icon("zap",15)} Horas de foco por día <span class="tag">última semana</span>`;
+  const H = 190, pl = 34, pr = 10, pt = 18, pb = 28, ih = H - pt - pb;
+  const vals = rows.map(r => r.foco || 0);
+  const step = niceStep(Math.max(...vals, 1) / 4), maxY = step * 4;
+  const band = (W - pl - pr) / rows.length, short = band < 46;
+  const y = v => pt + ih - (v / maxY) * ih;
+  const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
+  const pts = rows.map((r, i) => ({ x: pl + band * i + band / 2, y: y(r.foco || 0) }));
+  const d = smooth(pts, y(0));
+  let grid = "", labels = "";
+  const dec = step % 1 ? 1 : 0;
+  for (let t = 0; t <= 4; t++){
+    const yy = y(step * t);
+    grid += `<line x1="${pl}" x2="${W-pr}" y1="${yy}" y2="${yy}" class="${t === 0 ? "baseline" : "gl"}"/>
+             <text x="${pl-6}" y="${yy+4}" class="tick" text-anchor="end">${fmt(step*t, dec)}</text>`;
+  }
+  const maxV = Math.max(...vals);
+  const dots = rows.map((r, i) => {
+    const v = r.foco || 0, p = pts[i];
+    if (v === maxV && v > 0) labels += `<text x="${p.x}" y="${p.y-11}" class="total" text-anchor="middle">${fmt(v,1)} h</text>`;
+    return `<circle class="dotpt" cx="${p.x}" cy="${p.y}" r="4" fill="${r.esHoy ? "var(--brand2)" : "var(--card-solid)"}"
+      stroke="var(--brand2)" stroke-width="2" data-tip="${esc(`${r.tipLabel}: ${fmt(v,1)} h de foco`)}"/>`;
+  }).join("");
+  const xlabs = rows.map((r, i) =>
+    `<text x="${pts[i].x}" y="${H-8}" class="xlab ${r.esHoy ? "hoy" : ""}" text-anchor="middle">${short ? r.label.split(" ")[0] : r.label}</text>`).join("");
+  el.innerHTML = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Horas de foco por día">
+    <defs>
+      <linearGradient id="gf-linea" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="var(--brand1)"/><stop offset=".55" stop-color="var(--brand2)"/><stop offset="1" stop-color="var(--brand3)"/>
+      </linearGradient>
+      <linearGradient id="gf-area" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="var(--brand1)" stop-opacity=".26"/><stop offset="1" stop-color="var(--brand1)" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    ${grid}
+    <path d="${d}L${pts[pts.length-1].x} ${y(0)}L${pts[0].x} ${y(0)}z" fill="url(#gf-area)"/>
+    <line x1="${pl}" x2="${W-pr}" y1="${y(avg)}" y2="${y(avg)}" stroke="var(--axis)" stroke-dasharray="4 4"/>
+    <text x="${W-pr-4}" y="${y(avg)-5}" class="total" text-anchor="end">prom. ${fmt(avg,1)} h</text>
+    <path d="${d}" fill="none" stroke="url(#gf-linea)" stroke-width="2.5" stroke-linecap="round"/>
+    ${dots}${labels}${xlabs}</svg>`;
+}
+
+function renderTipos(){
+  const el = $("#chartTipos"), W = el.clientWidth;
+  if (!W) return;
+  const rows = semanaRows();
+  $("#tituloTipos").innerHTML = `${icon("check",15)} Comparación por tipo de actividad <span class="tag">total de 7 días</span>`;
+  const tot = tiposConteo().map(m => ({ m, v: rows.reduce((s, r) => s + (r[m.id] || 0), 0) }))
+    .sort((a, b) => b.v - a.v);
+  const rowH = 47, H = tot.length * rowH + 2, max = Math.max(...tot.map(t => t.v), 1);
+  let defs = "", body = "";
+  tot.forEach(({ m, v }, i) => {
+    defs += `<linearGradient id="gt-${m.id}" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="${m.c1}"/><stop offset="1" stop-color="${m.c2}"/></linearGradient>`;
+    const yl = i * rowH + 13, yb = i * rowH + 21, bwMax = W - 50;
+    const bw = Math.max(v > 0 ? 8 : 3, (v / max) * bwMax);
+    const inside = bw + 46 > W;
+    body += `<g class="hrow" style="animation-delay:${i*45}ms">
+      <circle cx="5" cy="${yl-4}" r="4.5" fill="url(#gt-${m.id})"/>
+      <text x="16" y="${yl}" class="xlab">${m.label}</text>
+      <path class="seg-bar" d="${rightRect(0, yb, bw, 14, 4)}" fill="${v > 0 ? `url(#gt-${m.id})` : "var(--grid)"}"
+        data-tip="${esc(`${m.label}: ${fmt(v)} en 7 días · promedio ${fmt(v/7,1)}/día`)}"/>
+      <text x="${inside ? bw - 8 : bw + 8}" y="${yb + 11.5}" class="total" text-anchor="${inside ? "end" : "start"}"
+        ${inside ? 'fill="#fff"' : ""}>${fmt(v)}</text></g>`;
+  });
+  el.innerHTML = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Total semanal por tipo de actividad">
+    <defs>${defs}</defs>${body}</svg>`;
+}
+
+/* ================= Orquestación ================= */
+function renderHeader(){
+  $("#subtitulo").textContent = `${fechaLarga(P.hoy.fecha)} · ${P.nombre}`;
+}
+function renderVista(anim){
+  $("#main").classList.toggle("anim", anim && !RM);
+  renderHeader();
+  if (vista === "hoy"){ renderKPIs(anim); renderInsight(); renderTimeline(); }
+  else { renderResumen(); renderBarras(); renderFoco(); renderTipos(); }
+}
+function switchVista(v){
+  vista = v; localStorage.setItem("mdia:vista", v);
+  $("#vistaHoy").classList.toggle("oculta", v !== "hoy");
+  $("#vistaSemana").classList.toggle("oculta", v !== "semana");
+  renderVista(true);
+}
+
+/* Controles segmentados */
+function wireSeg(id, onPick){
+  const seg = $(id), btns = [...seg.querySelectorAll("button")];
+  btns.forEach((b, i) => b.addEventListener("click", () => {
+    if (b.classList.contains("on")) return;
+    seg.dataset.sel = i;
+    btns.forEach(x => { x.classList.toggle("on", x === b); x.setAttribute("aria-selected", x === b); });
+    onPick(b.dataset.v);
+  }));
+}
+function syncSeg(id, val){
+  const seg = $(id), btns = [...seg.querySelectorAll("button")];
+  btns.forEach((b, i) => {
+    const on = b.dataset.v === val;
+    b.classList.toggle("on", on); b.setAttribute("aria-selected", on);
+    if (on) seg.dataset.sel = i;
+  });
+}
+
+/* Tema claro/oscuro */
+function applyTema(t){
+  document.documentElement.dataset.theme = t;
+  localStorage.setItem("mdia:tema", t);
+  $("#metaTheme").setAttribute("content", t === "dark" ? "#0A0C0B" : "#FBFAF5");
+  $("#btnTema").innerHTML = icon(t === "dark" ? "sol" : "luna", 17);
+  if (P) renderVista(false);   /* el héroe y su sparkline usan la marca del tema */
+}
+
+/* Tooltip global (hover y tap) */
+const tip = $("#tip");
+document.addEventListener("pointerover", e => {
+  const t = e.target.closest("[data-tip]");
+  if (t){ tip.textContent = t.dataset.tip; tip.classList.add("on"); moveTip(e); }
+});
+document.addEventListener("pointermove", e => { if (tip.classList.contains("on")) moveTip(e); });
+document.addEventListener("pointerout", e => { if (e.target.closest("[data-tip]")) tip.classList.remove("on"); });
+addEventListener("scroll", () => tip.classList.remove("on"), { passive:true });
+function moveTip(e){
+  const r = tip.getBoundingClientRect();
+  let x = e.clientX + 14, y = e.clientY + 16;
+  if (x + r.width > innerWidth - 8)  x = e.clientX - r.width - 12;
+  if (y + r.height > innerHeight - 8) y = e.clientY - r.height - 12;
+  tip.style.left = Math.max(6, x) + "px";
+  tip.style.top  = Math.max(6, y) + "px";
+}
+
+/* ---------- Arranque ---------- */
+$("#logo").innerHTML = icon("spark", 22);
+$("#segPerfil button[data-v=ingeniero]").innerHTML = icon("code",14) + " Ingeniero";
+$("#segPerfil button[data-v=contador]").innerHTML  = icon("calc",14) + " Contador";
+$("#segVista button[data-v=hoy]").innerHTML    = icon("sol",14) + " Hoy";
+$("#segVista button[data-v=semana]").innerHTML = icon("barras",14) + " Semana";
+
+wireSeg("#segPerfil", v => { setPerfil(v); renderVista(true); });
+wireSeg("#segVista", switchVista);
+$("#btnTema").addEventListener("click", () =>
+  applyTema(document.documentElement.dataset.theme === "dark" ? "light" : "dark"));
+
+applyTema(document.documentElement.dataset.theme || "dark");
+setPerfil(perfil);
+syncSeg("#segPerfil", perfil);
+syncSeg("#segVista", vista);
+$("#vistaHoy").classList.toggle("oculta", vista !== "hoy");
+$("#vistaSemana").classList.toggle("oculta", vista !== "semana");
+renderVista(true);
+
+let rz;
+addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => renderVista(false), 160); });
+document.addEventListener("visibilitychange", () => { if (!document.hidden) renderVista(false); });
+</script>
+</body>
+</html>
